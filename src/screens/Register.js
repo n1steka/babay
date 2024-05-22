@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,32 +9,50 @@ import {
 } from "react-native";
 import axiosInstance from "../../utils/axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  useEffect(() => {
+    axiosInstance.get("/user").then((res) => console.log(res.data.data));
+  }, []);
 
   const RegisterUser = async () => {
-    if (email.length === 0 || password.length === 0) {
-      Alert.alert("Хэрэглэгчийн мэдээллийг бүрэн бөглөнө үү.");
+    if (email.length === 0 || password.length === 0 || name.length === 0) {
+      Alert.alert("Нэр, цахим шуудан, нууц үгийн мэдээллийг бүрэн бөглөнө үү.");
       return;
     }
 
     try {
-      const response = await axiosInstance.post("/user", {
-        email: email,
-        password: password,
-      });
-      const { data, token } = response.data.data;
+      const inputData = {
+        email,
+        password,
+        name,
+      };
+      const response = await axiosInstance.post("/user", inputData);
+      console.log(response.data.data);
+      // const { data, token } = response.data;
 
-      await AsyncStorage.setItem("token", token);
-      await AsyncStorage.setItem("user", JSON.stringify(data));
+      // await AsyncStorage.setItem("token", token);
+      // await AsyncStorage.setItem("user", JSON.stringify(data));
 
       Alert.alert("Амжилттай бүртгэгдлээ!");
+      // Clear input fields after successful registration
+      setEmail("");
+      setPassword("");
+      setName("");
       navigation.navigate("Login");
     } catch (error) {
-      console.log(error);
-      Alert.alert("Бүртгэл амжилтгүй боллоо:", error.message);
+      console.error("Registration Error:", error);
+      let errorMessage = "Бүртгэл амжилтгүй боллоо.";
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        errorMessage = error.response.data.message;
+      }
+      Alert.alert("Алдаа", errorMessage);
     }
   };
 
@@ -44,10 +62,22 @@ const RegisterScreen = ({ navigation }) => {
       <View style={styles.inputView}>
         <TextInput
           style={styles.TextInput}
+          placeholder="Нэр"
+          placeholderTextColor="#003f5c"
+          onChangeText={(text) => setName(text)}
+          value={name}
+          autoCapitalize="none"
+        />
+      </View>
+      <View style={styles.inputView}>
+        <TextInput
+          style={styles.TextInput}
           placeholder="Цахим шуудан"
           placeholderTextColor="#003f5c"
           onChangeText={(text) => setEmail(text)}
           value={email}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
       </View>
       <View style={styles.inputView}>

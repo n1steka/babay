@@ -8,8 +8,8 @@ let utga = true;
 const axiosInstance = axios.create({
   baseURL:
     utga === true
-      ? "http://localhost:8000/api/v1"
-      : "http://localhost:8000/api/v1",
+      ? "http://192.168.1.1:8000/api/v1"
+      : "http://192.168.1.1:8000/api/v1",
 });
 
 axiosInstance.interceptors.request.use(
