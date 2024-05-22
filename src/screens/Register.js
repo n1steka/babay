@@ -8,31 +8,34 @@ import {
   Alert,
 } from "react-native";
 import axiosInstance from "../../utils/axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const RegisterUser = () => {
+  const RegisterUser = async () => {
     if (email.length === 0 || password.length === 0) {
       Alert.alert("Хэрэглэгчийн мэдээллийг бүрэн бөглөнө үү.");
       return;
     }
 
-    axiosInstance
-      .post("/user", {
+    try {
+      const response = await axiosInstance.post("/user", {
         email: email,
         password: password,
-      })
-      .then((res) => {
-        console.log(res.data);
-        Alert.alert("Амжилттай бүртгэгдлээ!");
-        navigation.navigate("Login");
-      })
-      .catch((err) => {
-        console.log(err);
-        Alert.alert("Бүртгэл амжилтгүй боллоо: ", err.message);
       });
+      const { data, token } = response.data.data;
+
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(data));
+
+      Alert.alert("Амжилттай бүртгэгдлээ!");
+      navigation.navigate("Login");
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Бүртгэл амжилтгүй боллоо:", error.message);
+    }
   };
 
   return (
