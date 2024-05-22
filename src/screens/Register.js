@@ -9,13 +9,11 @@ import {
 } from "react-native";
 import axiosInstance from "../../utils/axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  useEffect(() => {
-    axiosInstance.get("/user").then((res) => console.log(res.data.data));
-  }, []);
 
   const RegisterUser = async () => {
     if (email.length === 0 || password.length === 0 || name.length === 0) {
@@ -31,10 +29,9 @@ const RegisterScreen = ({ navigation }) => {
       };
       const response = await axiosInstance.post("/user", inputData);
       console.log(response.data.data);
-      // const { data, token } = response.data;
-
-      // await AsyncStorage.setItem("token", token);
-      // await AsyncStorage.setItem("user", JSON.stringify(data));
+      const { data, token } = response.data;
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(data));
 
       Alert.alert("Амжилттай бүртгэгдлээ!");
       // Clear input fields after successful registration
@@ -66,7 +63,7 @@ const RegisterScreen = ({ navigation }) => {
           placeholderTextColor="#003f5c"
           onChangeText={(text) => setName(text)}
           value={name}
-          autoCapitalize="none"
+          autoCapitalize="words"
         />
       </View>
       <View style={styles.inputView}>

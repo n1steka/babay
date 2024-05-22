@@ -6,17 +6,38 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import axiosInstance from "../../utils/axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const checkLogin = async () => {
-    axiosInstance.post("/user/login");
+    if (email === "" || password === "") {
+      Alert.alert("Бүх талбарыг бөглөнө үү!");
+      return;
+    }
 
-    navigation.navigate("DrawerNav", { screen: "Миний булан" });
+    try {
+      const response = await axiosInstance.post("/user/login", {
+        email,
+        password,
+      });
+
+      const { data, token } = response.data;
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(data));
+      navigation.navigate("DrawerNav", { screen: "Миний булан" });
+    } catch (err) {
+      console.error(err);
+      Alert.alert(
+        "Нэвтрэхэд алдаа гарлаа",
+        err.response?.data?.msg || "Алдаа гарлаа."
+      );
+    }
   };
 
   return (
@@ -29,6 +50,8 @@ function LoginScreen({ navigation }) {
           placeholderTextColor="#003f5c"
           onChangeText={setEmail}
           value={email}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
       </View>
       <View style={styles.inputView}>
@@ -41,15 +64,8 @@ function LoginScreen({ navigation }) {
           value={password}
         />
       </View>
-      <TouchableOpacity>
-        <Text
-          style={styles.forgot_button}
-          onPress={() => {
-            navigation.navigate("Register");
-          }}
-        >
-          Шинээр бүртгүүлэх
-        </Text>
+      <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+        <Text style={styles.forgot_button}>Шинээр бүртгүүлэх</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.loginBtn} onPress={checkLogin}>
         <Text style={styles.loginText}>Нэвтрэх</Text>

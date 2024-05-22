@@ -12,7 +12,7 @@ import Doctor from "./src/screens/DoctorScreen";
 import Post from "./src/screens/Post";
 import Read from "./src/screens/read";
 import DRegister from "./src/screens/Dregister";
-
+import UserContext from "./context/userContext";
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -22,6 +22,7 @@ const DrawerNav = () => {
       <Drawer.Screen name="Нүүр хуудас" component={Read} />
       <Drawer.Screen name="Миний булан" component={Mypro} />
       <Drawer.Screen name="Эмч мэдээлэл харах" component={Doctor} />
+      <Drawer.Screen name="News" component={NewsScreen} />
       <Drawer.Screen name="Гарах" component={LogoutScreen} />
     </Drawer.Navigator>
   );

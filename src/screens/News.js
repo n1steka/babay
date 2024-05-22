@@ -1,28 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, GestureHandlerRootView,ScrollView } from 'react-native';
-import * as SQLite from 'expo-sqlite';
-import * as ImagePicker from 'expo-image-picker';
-import 'react-native-gesture-handler';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Alert,
+} from "react-native";
+import axiosInstance from "../../utils/axios"; // Assuming axiosInstance is configured
+import * as ImagePicker from "expo-image-picker";
+import "react-native-gesture-handler";
 
 const News = () => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
-  const [cont, setCont] = useState('');
-
-  useEffect(async () => {
-    const db = SQLite.openDatabaseAsync('news.db');
-    await db.transaction(tx => {
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS news (news_id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, image BLOB, cont TEXT,comment TEXT, year INTEGER, month INTEGER);'
-      );
-    });
-  }, []);
+  const [cont, setCont] = useState("");
+  const [imageUri, setImageUri] = useState(null);
 
   const handleChooseImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status!== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
+    if (status !== "granted") {
+      alert("Sorry, we need camera roll permissions to make this work!");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -34,22 +35,59 @@ const News = () => {
 
     if (!result.cancelled) {
       setImage(result.uri);
+      handleUploadImage(result.uri);
+    }
+  };
+
+  const handleUploadImage = async (uri) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      name: "photo.jpg",
+      type: "image/jpeg",
+    });
+
+    try {
+      const response = await axiosInstance.post("/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setImageUri(response.data.url);
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      Alert.alert("Image upload failed. Please try again.");
     }
   };
 
   const saveNewsPost = async () => {
-    const db = await SQLite.openDatabaseAsync('news.db');
-    await db.transaction(tx => {
-      tx.executeSql('INSERT INTO news (title, content, image, cont) VALUES (?,?,?,?)', [title, content, image, cont]);
-    });
-    setTitle('');
-    setContent('');
-    setImage(null);
-    setCont('');
+    if (!title || !content || !imageUri || !cont) {
+      Alert.alert("Please fill out all fields and upload an image.");
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post("/news", {
+        title,
+        content,
+        image: imageUri,
+        cont,
+      });
+
+      setTitle("");
+      setContent("");
+      setImage(null);
+      setImageUri(null);
+      setCont("");
+
+      Alert.alert("News post saved successfully!");
+    } catch (error) {
+      console.error("Failed to save news post:", error);
+      Alert.alert("Failed to save news post. Please try again.");
+    }
   };
 
   return (
-    <GestureHandlerRootView>
     <ScrollView style={styles.container}>
       <TextInput
         style={styles.input}
@@ -63,14 +101,20 @@ const News = () => {
         value={content}
         onChangeText={setContent}
       />
+      <TextInput
+        style={styles.input}
+        placeholder="Additional Content"
+        value={cont}
+        onChangeText={setCont}
+      />
       <TouchableOpacity style={styles.button} onPress={handleChooseImage}>
         <Text>Choose Image</Text>
       </TouchableOpacity>
+      {image && <Image source={{ uri: image }} style={styles.image} />}
       <TouchableOpacity style={styles.button} onPress={saveNewsPost}>
         <Text>Save News Post</Text>
       </TouchableOpacity>
     </ScrollView>
-    </GestureHandlerRootView>
   );
 };
 
@@ -81,18 +125,24 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    borderColor: 'gray',
+    borderColor: "gray",
     borderWidth: 1,
     marginBottom: 10,
     paddingHorizontal: 10,
   },
   button: {
-    backgroundColor: 'blue',
+    backgroundColor: "blue",
     padding: 10,
     marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 5,
+  },
+  image: {
+    width: "100%",
+    height: 200,
+    borderRadius: 5,
+    marginTop: 10,
   },
 });
 

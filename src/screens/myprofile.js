@@ -5,10 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
-import * as SQLite from "expo-sqlite";
-
-const db = SQLite.openDatabaseAsync("myprofile.db");
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ProfileScreen = () => {
   const [username, setUsername] = useState("");
@@ -17,54 +16,37 @@ const ProfileScreen = () => {
   const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
-    createProfileTable();
+    const fetchUserInfo = async () => {
+      try {
+        const userInfo = await AsyncStorage.getItem("user");
+        if (userInfo) {
+          const user = JSON.parse(userInfo);
+          setUsername(user.name || "");
+          setEmail(user.email || "");
+          setBio(user.bio || ""); // Adjust based on your actual user object structure
+        }
+      } catch (error) {
+        console.error("Failed to load user info:", error);
+      }
+    };
+
     fetchUserInfo();
   }, []);
 
-  const createProfileTable = async () => {
-    await db.transaction((tx) => {
-      tx.executeSql(
-        "CREATE TABLE IF NOT EXISTS profile (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, email TEXT, bio TEXT)"
-      );
-    });
-  };
-
-  const fetchUserInfo = async () => {
-    await db.transaction((tx) => {
-      tx.executeSql(
-        "SELECT * FROM profile LIMIT 1",
-        [],
-        (_, { rows }) => {
-          if (rows.length > 0) {
-            const { username, email, bio } = rows.item(0);
-            setUsername(username);
-            setEmail(email);
-            setBio(bio);
-          }
-        },
-        (_, error) => {
-          console.error("Error fetching user info:", error);
-        }
-      );
-    });
-  };
-
   const saveProfile = async () => {
-    await db.transaction((tx) => {
-      tx.executeSql(
-        "INSERT OR REPLACE INTO profile (username, email, bio) VALUES (?, ?, ?)",
-        [username, email, bio],
-        (_, { rowsAffected }) => {
-          if (rowsAffected > 0) {
-            console.log("Мэдээлэл шинэчлэгдлээ");
-          }
-        },
-        (_, error) => {
-          console.error("Error saving profile:", error);
-        }
-      );
-    });
-    setEditMode(false);
+    try {
+      const updatedUser = {
+        name: username,
+        email,
+        bio,
+      };
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+      setEditMode(false);
+      Alert.alert("Амжилттай хадгалагдлаа");
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+      Alert.alert("Хадгалахад алдаа гарлаа");
+    }
   };
 
   const handleEdit = () => {
@@ -88,6 +70,7 @@ const ProfileScreen = () => {
         onChangeText={setEmail}
         placeholder="Цахим шуудангаа бичнэ үү"
         keyboardType="email-address"
+        autoCapitalize="none"
         editable={editMode}
       />
       <Text style={styles.label}>Утасны дугаар:</Text>

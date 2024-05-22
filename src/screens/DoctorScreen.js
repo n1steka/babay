@@ -1,29 +1,31 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, Image } from "react-native";
-import * as SQLite from "expo-sqlite";
-
-const db = SQLite.openDatabaseSync("doctorProfiles.db");
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+} from "react-native";
+import axiosInstance from "../../utils/axios"; // Assuming axiosInstance is set up for API calls
 
 const DoctorProfileOutputScreen = () => {
   const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProfiles();
   }, []);
 
-  const fetchProfiles = () => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        "SELECT * FROM doctorProfiles",
-        [],
-        (_, { rows }) => {
-          setProfiles(rows._array);
-        },
-        (_, error) => {
-          console.error("Error fetching doctor profiles:", error);
-        }
-      );
-    });
+  const fetchProfiles = async () => {
+    try {
+      const response = await axiosInstance.get("/user"); // Adjust the endpoint as needed
+      setProfiles(response.data);
+    } catch (error) {
+      console.error("Failed to fetch profiles:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderProfileItem = ({ item }) => {
@@ -49,11 +51,15 @@ const DoctorProfileOutputScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={profiles}
-        renderItem={renderProfileItem}
-        keyExtractor={(item) => item.id.toString()}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <FlatList
+          data={profiles}
+          renderItem={renderProfileItem}
+          keyExtractor={(item) => item.id.toString()}
+        />
+      )}
     </View>
   );
 };
