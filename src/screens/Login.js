@@ -31,7 +31,12 @@ function LoginScreen({ navigation }) {
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(data));
       await AsyncStorage.setItem("role", JSON.stringify(data.role));
-      navigation.navigate("DrawerNav", { screen: "Миний булан" });
+
+      if (data.role === "admin") {
+        navigation.replace("AdminDrawerNav");
+      } else {
+        navigation.replace("DrawerNav");
+      }
     } catch (err) {
       console.error(err);
       Alert.alert(
@@ -99,8 +104,6 @@ const styles = StyleSheet.create({
   TextInput: {
     height: 50,
     flex: 1,
-    padding: 10,
-    marginLeft: 20,
     color: "#003f5c",
   },
   forgot_button: {

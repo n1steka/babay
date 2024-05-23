@@ -1,3 +1,4 @@
+// src/screens/NewsReadScreen.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,46 +7,36 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Alert,
+  Image, // Import Image component
 } from "react-native";
-import * as SQLite from "expo-sqlite";
+import { usePostContext } from "../../context/postContext";
+import axiosInstance, { IMGURL } from "../../utils/axios";
+import EditNewsModal from "../components/EditNewsModal";
 
-const NewsReadScreen = () => {
-  const [news, setNews] = useState([]);
+const NewsReadScreen = ({ navigation }) => {
+  const { posts, fetchPosts } = usePostContext();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedNewsItem, setSelectedNewsItem] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    fetchNews();
+    fetchPosts();
   }, []);
 
-  const fetchNews = async () => {
-    const db = await SQLite.openDatabaseSync("news.db");
-    await db.transaction((tx) => {
-      tx.executeSql(
-        "SELECT * FROM news",
-        [],
-        (_, { rows }) => {
-          setNews(rows._array);
-        },
-        (_, error) => {
-          console.error("Error fetching news:", error);
-        }
-      );
-    });
+  const deleteNewsItem = async (id) => {
+    try {
+      await axiosInstance.delete(`/post/${id}`);
+      fetchPosts();
+    } catch (error) {
+      console.error("Error deleting news item:", error);
+      Alert.alert("Error", "Failed to delete news item.");
+    }
   };
 
-  const deleteNewsItem = (id) => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        "DELETE FROM news WHERE id = ?",
-        [id],
-        () => {
-          fetchNews(); // Refresh the news list after deletion
-        },
-        (_, error) => {
-          console.error("Error deleting news item:", error);
-        }
-      );
-    });
+  const handleUpdate = (item) => {
+    setSelectedNewsItem(item);
+    setModalVisible(true);
   };
 
   const renderNewsItem = ({ item }) => {
@@ -53,10 +44,18 @@ const NewsReadScreen = () => {
       <View style={styles.newsItem}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.content}>{item.content}</Text>
+        {item.photo && (
+          <Image
+            source={{
+              uri: `${IMGURL}/${item.photo}`,
+            }}
+            style={styles.image}
+          />
+        )}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.Button}
-            onPress={() => deleteNewsItem(item.id)}
+            onPress={() => deleteNewsItem(item._id)}
           >
             <Text style={styles.buttonText}>Устгах</Text>
           </TouchableOpacity>
@@ -71,12 +70,7 @@ const NewsReadScreen = () => {
     );
   };
 
-  const handleUpdate = (item) => {
-    // Implement update logic here, such as navigation to update screen with item details
-    navigation.navigate("News", { newsItem: item });
-  };
-
-  const filteredNews = news.filter((item) =>
+  const filteredNews = posts.filter((item) =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -91,8 +85,15 @@ const NewsReadScreen = () => {
       <FlatList
         data={filteredNews}
         renderItem={renderNewsItem}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
       />
+      {selectedNewsItem && (
+        <EditNewsModal
+          visible={isModalVisible}
+          onClose={() => setModalVisible(false)}
+          newsItem={selectedNewsItem}
+        />
+      )}
     </View>
   );
 };
@@ -140,6 +141,12 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     textAlign: "center",
+  },
+  image: {
+    width: "100%",
+    height: 200,
+    borderRadius: 5,
+    marginBottom: 10,
   },
 });
 

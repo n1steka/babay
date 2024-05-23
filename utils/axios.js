@@ -1,15 +1,15 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const IMGURL = "http://192.168.1.227:8000/uploads";
+export const IMGURL = "http://192.168.1.10:8000/uploads";
 
 let utga = true;
 
 const axiosInstance = axios.create({
   baseURL:
     utga === true
-      ? "http://192.168.1.227:8000/api/v1"
-      : "http://192.168.1.227:8000/api/v1",
+      ? "http://192.168.1.10:8000/api/v1"
+      : "http://192.168.1.10:8000/api/v1",
 });
 
 axiosInstance.interceptors.request.use(

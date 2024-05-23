@@ -1,66 +1,131 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
-  View,
   Text,
-  FlatList,
+  TextInput,
+  TouchableOpacity,
   StyleSheet,
   Image,
-  ActivityIndicator,
+  ScrollView,
+  Alert,
 } from "react-native";
-import axiosInstance from "../../utils/axios"; // Assuming axiosInstance is set up for API calls
+import axiosInstance from "../../utils/axios";
+import * as ImagePicker from "expo-image-picker";
+import { usePostContext } from "../../context/postContext";
+const DoctorProfile = () => {
+  const { fetchDoctors } = usePostContext();
+  const [name, setName] = useState("");
+  const [education, setEducation] = useState("");
+  const [hospital, setHospital] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [address, setAddress] = useState("");
+  const [image, setImage] = useState(null);
 
-const DoctorProfileOutputScreen = () => {
-  const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const handleChooseImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Sorry, we need camera roll permissions to make this work!");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
 
-  useEffect(() => {
-    fetchProfiles();
-  }, []);
-
-  const fetchProfiles = async () => {
-    try {
-      const response = await axiosInstance.get("/user"); // Adjust the endpoint as needed
-      setProfiles(response.data);
-    } catch (error) {
-      console.error("Failed to fetch profiles:", error);
-    } finally {
-      setLoading(false);
+    if (!result.cancelled) {
+      setImage(result.assets[0]);
     }
   };
 
-  const renderProfileItem = ({ item }) => {
-    const imageUri = item.image ? `data:image/jpeg;base64,${item.image}` : null;
-    return (
-      <View style={styles.profileItem}>
-        <Text style={styles.label}>Нэр :</Text>
-        <Text style={styles.value}>{item.name}</Text>
-        <Text style={styles.label}>Боловсрол:</Text>
-        <Text style={styles.value}>{item.education}</Text>
-        <Text style={styles.label}>Ажлын туршлага:</Text>
-        <Text style={styles.value}>{item.hospital}</Text>
-        <Text style={styles.label}>Ажлын газрын хаяг:</Text>
-        <Text style={styles.value}>{item.address}</Text>
-        <Text style={styles.label}>Утасны дугаар:</Text>
-        <Text style={styles.value}>{item.phoneNumber}</Text>
-        <Text style={styles.label}>Ажлын газрын утасны дугаар:</Text>
-        <Text style={styles.value}>{item.phone}</Text>
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
-      </View>
-    );
+  const saveDoctorProfile = async () => {
+    if (
+      !name ||
+      !education ||
+      !hospital ||
+      !phoneNumber ||
+      !address ||
+      !image
+    ) {
+      Alert.alert("Бүх талбарыг бөглөнө үү ");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", {
+      uri: image.uri,
+      name: image.fileName,
+      type: image.mimeType,
+    });
+    formData.append("name", name);
+    formData.append("education", education);
+    formData.append("hospital", hospital);
+    formData.append("phoneNumber", phoneNumber);
+    formData.append("address", address);
+
+    try {
+      const response = await axiosInstance.post("/doctors", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.success) {
+        fetchDoctors();
+        setName("");
+        setEducation("");
+        setHospital("");
+        setPhoneNumber("");
+        setAddress("");
+        setImage(null);
+        Alert.alert("Doctor profile saved successfully!");
+      }
+    } catch (error) {
+      console.error("Failed to save doctor profile:", error);
+      Alert.alert("Failed to save doctor profile. Please try again.");
+    }
   };
 
   return (
-    <View style={styles.container}>
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <FlatList
-          data={profiles}
-          renderItem={renderProfileItem}
-          keyExtractor={(item) => item.id.toString()}
-        />
-      )}
-    </View>
+    <ScrollView style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Education"
+        value={education}
+        onChangeText={setEducation}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Hospital"
+        value={hospital}
+        onChangeText={setHospital}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Phone Number"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Address"
+        value={address}
+        onChangeText={setAddress}
+      />
+      <TouchableOpacity style={styles.button} onPress={handleChooseImage}>
+        <Text style={styles.buttonText}>Choose Image</Text>
+      </TouchableOpacity>
+      {image && <Image source={{ uri: image.uri }} style={styles.image} />}
+      <TouchableOpacity style={styles.button} onPress={saveDoctorProfile}>
+        <Text style={styles.buttonText}>Save Doctor Profile</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
@@ -69,19 +134,23 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  profileItem: {
-    marginBottom: 20,
+  input: {
+    height: 40,
+    borderColor: "gray",
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-  },
-  label: {
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  value: {
     marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  button: {
+    backgroundColor: "blue",
+    padding: 10,
+    marginTop: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: "white",
   },
   image: {
     width: "100%",
@@ -91,4 +160,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DoctorProfileOutputScreen;
+export default DoctorProfile;

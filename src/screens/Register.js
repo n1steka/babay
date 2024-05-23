@@ -27,14 +27,10 @@ const RegisterScreen = ({ navigation }) => {
         password,
         name,
       };
+      console.log(" input data -----------", inputData);
       const response = await axiosInstance.post("/user", inputData);
       console.log(response.data.data);
-      const { data, token } = response.data;
-      await AsyncStorage.setItem("token", token);
-      await AsyncStorage.setItem("user", JSON.stringify(data));
-
       Alert.alert("Амжилттай бүртгэгдлээ!");
-      // Clear input fields after successful registration
       setEmail("");
       setPassword("");
       setName("");

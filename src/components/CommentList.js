@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Button, ActivityIndicator } from "react-native";
 import axiosInstance from "../../utils/axios";
 import tw from "twrnc";
+import { usePostContext } from "../../context/postContext";
 
 export default function CommentList({ postId }) {
+  const { fetchPosts } = usePostContext();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
@@ -11,6 +13,7 @@ export default function CommentList({ postId }) {
 
   useEffect(() => {
     fetchComments();
+    fetchPosts();
   }, []);
 
   const fetchComments = async () => {
@@ -42,8 +45,8 @@ export default function CommentList({ postId }) {
 
   return (
     <View>
-      {comments.slice(0, showAllComments ? comments.length : 2).map((el) => (
-        <View key={el._id} style={tw`gap-2`}>
+      {comments.slice(0, showAllComments ? comments.length : 2).map((el, i) => (
+        <View key={i} style={tw`gap-2`}>
           <Text style={tw`text-sm text-gray-600`}>
             Нэр: {el.createUser.name}
           </Text>

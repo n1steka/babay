@@ -11,8 +11,9 @@ import {
 import axiosInstance from "../../utils/axios";
 import * as ImagePicker from "expo-image-picker";
 import "react-native-gesture-handler";
-
+import { usePostContext } from "../../context/postContext";
 const News = () => {
+  const { fetchPosts } = usePostContext();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [cont, setCont] = useState("");
@@ -60,6 +61,7 @@ const News = () => {
       });
 
       if (response.data.success) {
+        fetchPosts();
         setTitle("");
         setContent("");
         setImage(null);
