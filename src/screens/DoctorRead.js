@@ -7,11 +7,10 @@ import {
   TextInput,
   Button,
   Image,
-  Alert,
 } from "react-native";
-import { IMGURL } from "../../utils/axios";
-import { usePostContext } from "../../context/postContext";
-import EditDoctorModal from "../components/EditDoctorModal";
+import { IMGURL } from "../../utils/axios"; // Ensure the path is correct
+import { usePostContext } from "../../context/postContext"; // Ensure the path is correct
+import EditDoctorModal from "../components/EditDoctorModal"; // Ensure the path is correct
 
 const DoctorsReadScreen = () => {
   const { fetchDoctors, doctor } = usePostContext();
@@ -21,12 +20,13 @@ const DoctorsReadScreen = () => {
 
   useEffect(() => {
     fetchDoctors();
-  }, [!doctor.length]);
+  }, []);
 
   const handleEditDoctor = (doctor) => {
     setSelectedDoctor(doctor);
     setEditModalVisible(true);
   };
+
   const renderDoctorItem = ({ item }) => {
     return (
       <View style={styles.doctorItem}>
@@ -42,7 +42,6 @@ const DoctorsReadScreen = () => {
         <Text style={styles.phoneNumber}>Phone Number: {item.phoneNumber}</Text>
         <Text style={styles.address}>Address: {item.address}</Text>
         <Button
-          style={styles.postButton}
           title="Мэдээлэл өөрчлөх"
           onPress={() => handleEditDoctor(item)}
         />
@@ -68,13 +67,13 @@ const DoctorsReadScreen = () => {
         keyExtractor={(item) => item._id.toString()}
         contentContainerStyle={styles.listContent}
       />
-      {
+      {selectedDoctor && (
         <EditDoctorModal
           visible={isEditModalVisible}
           onClose={() => setEditModalVisible(false)}
           doctor={selectedDoctor}
         />
-      }
+      )}
     </View>
   );
 };
@@ -83,6 +82,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#fff",
   },
   searchInput: {
     borderWidth: 1,
@@ -95,12 +95,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   doctorItem: {
-    gap: 5,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
+    backgroundColor: "#f9f9f9",
   },
   name: {
     fontSize: 18,
@@ -128,12 +128,6 @@ const styles = StyleSheet.create({
     height: 280,
     borderRadius: 5,
     marginBottom: 10,
-  },
-  postButton: {
-    backgroundColor: "blue",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
   },
 });
 
