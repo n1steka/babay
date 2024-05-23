@@ -42,7 +42,7 @@ const AdminDrawerNav = () => (
 );
 
 export default function App() {
-  const [initialRoute, setInitialRoute] = useState("Login");
+  const [initialRoute, setInitialRoute] = useState(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -54,13 +54,15 @@ export default function App() {
         } else {
           setInitialRoute("DrawerNav");
         }
+      } else {
+        setInitialRoute("Login");
       }
     };
     checkUser();
   }, []);
 
-  if (initialRoute === "Login") {
-    return null;
+  if (!initialRoute) {
+    return null; // Render a loading spinner here if you wish
   }
 
   return (
