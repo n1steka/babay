@@ -30,6 +30,7 @@ function LoginScreen({ navigation }) {
       const { data, token } = response.data;
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(data));
+      await AsyncStorage.setItem("role", JSON.stringify(data.role));
       navigation.navigate("DrawerNav", { screen: "Миний булан" });
     } catch (err) {
       console.error(err);

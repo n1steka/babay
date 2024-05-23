@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createDrawerNavigator } from "@react-navigation/drawer";
@@ -12,6 +12,8 @@ import Doctor from "./src/screens/DoctorScreen";
 import Post from "./src/screens/Post";
 import Read from "./src/screens/read";
 import DRegister from "./src/screens/Dregister";
+import { PostProvider } from "./context/postContext";
+
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -43,26 +45,29 @@ const AdminDrawerNav = () => {
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Post" component={Post} />
-        <Stack.Screen name="News" component={NewsScreen} />
-        <Stack.Screen
-          name="DrawerNav"
-          component={DrawerNav}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="AdminDrawerNav"
-          component={AdminDrawerNav}
-          options={{ headerShown: false }}
-        />
-      </Stack.Navigator>
+      <PostProvider>
+        <PostProvider>
+          <Stack.Navigator initialRouteName="Login">
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen
+              name="DrawerNav"
+              component={DrawerNav}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="AdminDrawerNav"
+              component={AdminDrawerNav}
+              options={{ headerShown: false }}
+            />
+          </Stack.Navigator>
+        </PostProvider>
+      </PostProvider>
     </NavigationContainer>
   );
 }
+0;

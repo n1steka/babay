@@ -1,27 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import * as SQLite from 'expo-sqlite';
-
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
+import * as SQLite from "expo-sqlite";
 
 const NewsReadScreen = () => {
   const [news, setNews] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchNews();
   }, []);
 
   const fetchNews = async () => {
-    const db = await SQLite.openDatabaseSync('news.db');
+    const db = await SQLite.openDatabaseSync("news.db");
     await db.transaction((tx) => {
       tx.executeSql(
-        'SELECT * FROM news',
+        "SELECT * FROM news",
         [],
         (_, { rows }) => {
           setNews(rows._array);
         },
         (_, error) => {
-          console.error('Error fetching news:', error);
+          console.error("Error fetching news:", error);
         }
       );
     });
@@ -30,14 +36,13 @@ const NewsReadScreen = () => {
   const deleteNewsItem = (id) => {
     db.transaction((tx) => {
       tx.executeSql(
-        'DELETE FROM news WHERE id = ?',
+        "DELETE FROM news WHERE id = ?",
         [id],
         () => {
-          console.log('News item deleted successfully');
           fetchNews(); // Refresh the news list after deletion
         },
         (_, error) => {
-          console.error('Error deleting news item:', error);
+          console.error("Error deleting news item:", error);
         }
       );
     });
@@ -49,20 +54,26 @@ const NewsReadScreen = () => {
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.content}>{item.content}</Text>
         <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.Button} onPress={() => deleteNewsItem(item.id)}>
-          <Text style={styles.buttonText}>Устгах</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.Button} onPress={() => handleUpdate(item)}>
-          <Text style={styles.buttonText}>Шинэчлэх</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.Button}
+            onPress={() => deleteNewsItem(item.id)}
+          >
+            <Text style={styles.buttonText}>Устгах</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.Button}
+            onPress={() => handleUpdate(item)}
+          >
+            <Text style={styles.buttonText}>Шинэчлэх</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
 
   const handleUpdate = (item) => {
     // Implement update logic here, such as navigation to update screen with item details
-    navigation.navigate('News', { newsItem: item });
+    navigation.navigate("News", { newsItem: item });
   };
 
   const filteredNews = news.filter((item) =>
@@ -93,7 +104,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
     marginBottom: 20,
@@ -101,34 +112,34 @@ const styles = StyleSheet.create({
   newsItem: {
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   content: {
     fontSize: 16,
   },
   Button: {
-    backgroundColor: 'deeppink',
+    backgroundColor: "deeppink",
     borderRadius: 5,
     padding: 10,
-    marginBottom:1,
+    marginBottom: 1,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between', // Adjust as needed
-    marginTop:10,
-    padding:5,
+    flexDirection: "row",
+    justifyContent: "space-between", // Adjust as needed
+    marginTop: 10,
+    padding: 5,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 

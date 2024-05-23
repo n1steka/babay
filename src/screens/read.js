@@ -1,3 +1,5 @@
+// NewsReadScreen.js
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -7,12 +9,14 @@ import {
   TextInput,
   Button,
   Image,
-  ScrollView,
+  Alert,
 } from "react-native";
-import axiosInstance, { IMGURL } from "../../utils/axios";
+import { IMGURL } from "../../utils/axios";
+import CommentList from "../components/CommentList";
+import { usePostContext } from "../../context/postContext";
 
 const NewsReadScreen = () => {
-  const [posts, setPosts] = useState([]);
+  const { posts, fetchPosts, addComment } = usePostContext();
   const [searchQuery, setSearchQuery] = useState("");
   const [newComment, setNewComment] = useState("");
 
@@ -20,37 +24,12 @@ const NewsReadScreen = () => {
     fetchPosts();
   }, []);
 
-  const fetchPosts = async () => {
-    try {
-      const response = await axiosInstance.get("/post");
-      if (response.data.success) {
-        setPosts(response.data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-    }
-  };
-
-  const addComment = async (postId) => {
-    if (newComment.trim() === "") return;
-
-    try {
-      await axiosInstance.post(`/post/${postId}/comments`, {
-        comment: newComment,
-      });
-      fetchPosts();
-      setNewComment("");
-    } catch (error) {
-      console.error("Error adding comment:", error);
-    }
-  };
-
   const renderPostItem = ({ item }) => {
     return (
       <View style={styles.postItem}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description}>{item.description}</Text>
-        <Text style={styles.content}>{item.content}</Text>
+        <Text style={styles.title}> Гарчиг : {item.title}</Text>
+        <Text style={styles.content}> {item.content}</Text>
+        <Text style={styles.description}> {item.description}</Text>
         {item.photo && (
           <Image
             source={{
@@ -60,6 +39,7 @@ const NewsReadScreen = () => {
           />
         )}
         <Text style={styles.comment}>Comments:</Text>
+        <CommentList postId={item._id} />
         {item.comments &&
           item.comments.map((comment, index) => (
             <Text key={index} style={styles.comment}>
@@ -72,7 +52,14 @@ const NewsReadScreen = () => {
           value={newComment}
           onChangeText={setNewComment}
         />
-        <Button title="Post Comment" onPress={() => addComment(item._id)} />
+        <Button
+          title="Post Comment"
+          onPress={() => {
+            addComment(item._id, newComment);
+            setNewComment("");
+            Alert.alert("Ажилттай");
+          }}
+        />
       </View>
     );
   };

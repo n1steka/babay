@@ -19,6 +19,8 @@ const ProfileScreen = () => {
     const fetchUserInfo = async () => {
       try {
         const userInfo = await AsyncStorage.getItem("user");
+        const role = await AsyncStorage.getItem("role");
+        console.log("---------", role);
         if (userInfo) {
           const user = JSON.parse(userInfo);
           setUsername(user.name || "");
