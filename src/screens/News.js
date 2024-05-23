@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  View,
   Text,
   TextInput,
   TouchableOpacity,
@@ -9,16 +8,15 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import axiosInstance from "../../utils/axios"; // Assuming axiosInstance is configured
+import axiosInstance from "../../utils/axios";
 import * as ImagePicker from "expo-image-picker";
 import "react-native-gesture-handler";
 
 const News = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [image, setImage] = useState(null);
   const [cont, setCont] = useState("");
-  const [imageUri, setImageUri] = useState(null);
+  const [image, setImage] = useState(null);
 
   const handleChooseImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,53 +32,40 @@ const News = () => {
     });
 
     if (!result.cancelled) {
-      setImage(result.uri);
-      handleUploadImage(result.uri);
-    }
-  };
-
-  const handleUploadImage = async (uri) => {
-    const formData = new FormData();
-    formData.append("file", {
-      uri,
-      name: "photo.jpg",
-      type: "image/jpeg",
-    });
-
-    try {
-      const response = await axiosInstance.post("/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      setImageUri(response.data.url);
-    } catch (error) {
-      console.error("Image upload failed:", error);
-      Alert.alert("Image upload failed. Please try again.");
+      setImage(result.assets[0]);
     }
   };
 
   const saveNewsPost = async () => {
-    if (!title || !content || !imageUri || !cont) {
+    if (!title || !content || !cont || !image) {
       Alert.alert("Please fill out all fields and upload an image.");
       return;
     }
 
+    const formData = new FormData();
+    formData.append("file", {
+      uri: image.uri,
+      name: image.fileName,
+      type: image.mimeType,
+    });
+    formData.append("description", cont);
+    formData.append("content", content);
+    formData.append("title", title);
+
     try {
-      const response = await axiosInstance.post("/news", {
-        title,
-        content,
-        image: imageUri,
-        cont,
+      const response = await axiosInstance.post("/post", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      setTitle("");
-      setContent("");
-      setImage(null);
-      setImageUri(null);
-      setCont("");
-
-      Alert.alert("News post saved successfully!");
+      if (response.data.success) {
+        setTitle("");
+        setContent("");
+        setImage(null);
+        setCont("");
+        Alert.alert("News post saved successfully!");
+      }
     } catch (error) {
       console.error("Failed to save news post:", error);
       Alert.alert("Failed to save news post. Please try again.");
@@ -108,11 +93,11 @@ const News = () => {
         onChangeText={setCont}
       />
       <TouchableOpacity style={styles.button} onPress={handleChooseImage}>
-        <Text>Choose Image</Text>
+        <Text style={styles.buttonText}>Choose Image</Text>
       </TouchableOpacity>
-      {image && <Image source={{ uri: image }} style={styles.image} />}
+      {image && <Image source={{ uri: image.uri }} style={styles.image} />}
       <TouchableOpacity style={styles.button} onPress={saveNewsPost}>
-        <Text>Save News Post</Text>
+        <Text style={styles.buttonText}>Save News Post</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -137,6 +122,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 5,
+  },
+  buttonText: {
+    color: "white",
   },
   image: {
     width: "100%",

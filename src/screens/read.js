@@ -1,110 +1,83 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TextInput, Button } from 'react-native';
-import * as SQLite from 'expo-sqlite';
-
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TextInput,
+  Button,
+  Image,
+  ScrollView,
+} from "react-native";
+import axiosInstance, { IMGURL } from "../../utils/axios";
 
 const NewsReadScreen = () => {
-  const [news, setNews] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [newComment, setNewComment] = useState('');
+  const [posts, setPosts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [newComment, setNewComment] = useState("");
 
   useEffect(() => {
-    createTables();
-    fetchNews();
+    fetchPosts();
   }, []);
 
-  const createTables = async () => {
-    const db = await SQLite.openDatabaseAsync('news.db');
-    await db.transaction((tx) => {
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS news (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, cont TEXT, image TEXT)',
-        [],
-        () => console.log('News table created successfully'),
-        (_, error) => console.error('Error creating news table:', error)
-      );
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS comment (id INTEGER PRIMARY KEY AUTOINCREMENT, news_id INTEGER, comment TEXT)',
-        [],
-        () => console.log('Comment table created successfully'),
-        (_, error) => console.error('Error creating comment table:', error)
-      );
-    });
+  const fetchPosts = async () => {
+    try {
+      const response = await axiosInstance.get("/post");
+      if (response.data.success) {
+        setPosts(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
   };
 
-  const fetchNews = async () => {
-     await db.transaction((tx) => {
-      tx.executeSql(
-        'SELECT news.id, news.title, news.content, news.cont, news.image, comment.comment FROM news LEFT JOIN comment ON news.id = comment.news_id',
-        [],
-        (_, { rows }) => {
-          const newsData = {};
-          rows._array.forEach((row) => {
-            if (!newsData[row.id]) {
-              newsData[row.id] = {
-                id: row.id,
-                title: row.title,
-                content: row.content,
-                cont: row.cont,
-                image: row.image,
-                comments: [],
-              };
-            }
-            if (row.comment) {
-              newsData[row.id].comments.push(row.comment);
-            }
-          });
-          setNews(Object.values(newsData));
-        },
-        (_, error) => {
-          console.error('Error fetching news:', error);
-        }
-      );
-    });
+  const addComment = async (postId) => {
+    if (newComment.trim() === "") return;
+
+    try {
+      await axiosInstance.post(`/post/${postId}/comments`, {
+        comment: newComment,
+      });
+      fetchPosts();
+      setNewComment("");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
   };
 
-  const renderNewsItem = ({ item }) => {
+  const renderPostItem = ({ item }) => {
     return (
-      <View style={styles.newsItem}>
+      <View style={styles.postItem}>
         <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.description}>{item.description}</Text>
         <Text style={styles.content}>{item.content}</Text>
-        <Text style={styles.cont}>{item.cont}</Text>
-        <Text style={styles.image}>{item.image}</Text>
-        <Text style={styles.comment}>Сэтгэгдэл:</Text>
-        {item.comments && item.comments.map((comment, index) => (
-          <Text key={index} style={styles.comment}>
-            {comment}
-          </Text>
-        ))}
+        {item.photo && (
+          <Image
+            source={{
+              uri: `${IMGURL}/${item.photo}`,
+            }}
+            style={styles.image}
+          />
+        )}
+        <Text style={styles.comment}>Comments:</Text>
+        {item.comments &&
+          item.comments.map((comment, index) => (
+            <Text key={index} style={styles.comment}>
+              {comment}
+            </Text>
+          ))}
         <TextInput
           style={styles.commentInput}
-          placeholder="Сэтгэгдэл бичих"
+          placeholder="Write a comment"
           value={newComment}
           onChangeText={setNewComment}
         />
-        <Button title="Сэтгэгдэл нийтлэх" onPress={() => addComment(item.id)} />
+        <Button title="Post Comment" onPress={() => addComment(item._id)} />
       </View>
     );
   };
 
-  const addComment = (newsId) => {
-    if (newComment.trim() === '') return;
-
-    db.transaction((tx) => {
-      tx.executeSql(
-        'INSERT INTO comment (news_id, comment) VALUES (?, ?)',
-        [newsId, newComment],
-        () => {
-          fetchNews();
-          setNewComment('');
-        },
-        (_, error) => {
-          console.error('Error adding comment:', error);
-        }
-      );
-    });
-  };
-
-  const filteredNews = news.filter((item) =>
+  const filteredPosts = posts.filter((item) =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -112,14 +85,15 @@ const NewsReadScreen = () => {
     <View style={styles.container}>
       <TextInput
         style={styles.searchInput}
-        placeholder="Хайлт хийх"
+        placeholder="Search"
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
       <FlatList
-        data={filteredNews}
-        renderItem={renderNewsItem}
-        keyExtractor={(item) => item.id.toString()}
+        data={filteredPosts}
+        renderItem={renderPostItem}
+        keyExtractor={(item) => item._id.toString()}
+        contentContainerStyle={styles.listContent}
       />
     </View>
   );
@@ -132,39 +106,48 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
     marginBottom: 20,
   },
-  newsItem: {
+  listContent: {
+    paddingBottom: 20,
+  },
+  postItem: {
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  description: {
+    fontSize: 16,
     marginBottom: 5,
   },
   content: {
     fontSize: 16,
-  },
-  cont: {
-    fontSize: 16,
+    marginBottom: 5,
   },
   image: {
-    fontSize: 16,
+    width: "100%",
+    height: 200,
+    borderRadius: 5,
+    marginBottom: 10,
   },
   comment: {
     fontSize: 16,
-    color: 'gray',
+    color: "gray",
+    marginBottom: 5,
   },
   commentInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
