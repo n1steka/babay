@@ -29,11 +29,8 @@ const DoctorsReadScreen = () => {
 
   useEffect(() => {
     userRoleFetch();
-  }, []); // Fetch role only once when the component mounts
-
-  useEffect(() => {
     fetchDoctors();
-  }, [fetchDoctors]); // Fetch doctors whenever fetchDoctors function changes
+  }, []); // Fetch role only once when the component mounts
 
   const handleEditDoctor = (doctor) => {
     setSelectedDoctor(doctor);

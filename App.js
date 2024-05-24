@@ -31,12 +31,9 @@ const DrawerNav = () => (
 const AdminDrawerNav = () => (
   <Drawer.Navigator>
     <Drawer.Screen name="Үндсэн" component={Post} />
-    <Drawer.Screen
-      name="Эмч мэдээлэл оруулах  dev and test"
-      component={DoctorRead}
-    />
+    <Drawer.Screen name="Эмч мэдээлэл оруулах" component={DoctorRead} />
+    <Drawer.Screen name="Зөвлөгөө оруулах" component={NewsScreen} />
     <Drawer.Screen name="Эмч мэдээлэл" component={Doctor} />
-    <Drawer.Screen name="Зөвөлгөө оруулах" component={NewsScreen} />
     <Drawer.Screen name="Гарах" component={LogoutScreen} />
   </Drawer.Navigator>
 );

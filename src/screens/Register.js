@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -15,29 +15,28 @@ const RegisterScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
-  const RegisterUser = async () => {
-    if (email.length === 0 || password.length === 0 || name.length === 0) {
-      Alert.alert("Нэр, цахим шуудан, нууц үгийн мэдээллийг бүрэн бөглөнө үү.");
+  const handleRegister = async () => {
+    if (email.trim() === "" || password.trim() === "" || name.trim() === "") {
+      Alert.alert("Please fill in all fields.");
       return;
     }
 
     try {
-      const inputData = {
+      const userData = {
         email,
         password,
         name,
       };
-      console.log(" input data -----------", inputData);
-      const response = await axiosInstance.post("/user", inputData);
-      console.log(response.data.data);
-      Alert.alert("Амжилттай бүртгэгдлээ!");
+
+      const response = await axiosInstance.post("/user", userData);
+      Alert.alert("Registration successful!");
       setEmail("");
       setPassword("");
       setName("");
       navigation.navigate("Login");
     } catch (error) {
       console.error("Registration Error:", error);
-      let errorMessage = "Бүртгэл амжилтгүй боллоо.";
+      let errorMessage = "Registration failed.";
       if (
         error.response &&
         error.response.data &&
@@ -45,17 +44,17 @@ const RegisterScreen = ({ navigation }) => {
       ) {
         errorMessage = error.response.data.message;
       }
-      Alert.alert("Алдаа", errorMessage);
+      Alert.alert("Error", errorMessage);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text>Бүртгүүлэх</Text>
+      <Text>Register</Text>
       <View style={styles.inputView}>
         <TextInput
           style={styles.TextInput}
-          placeholder="Нэр"
+          placeholder="Name"
           placeholderTextColor="#003f5c"
           onChangeText={(text) => setName(text)}
           value={name}
@@ -65,7 +64,7 @@ const RegisterScreen = ({ navigation }) => {
       <View style={styles.inputView}>
         <TextInput
           style={styles.TextInput}
-          placeholder="Цахим шуудан"
+          placeholder="Email"
           placeholderTextColor="#003f5c"
           onChangeText={(text) => setEmail(text)}
           value={email}
@@ -76,15 +75,15 @@ const RegisterScreen = ({ navigation }) => {
       <View style={styles.inputView}>
         <TextInput
           style={styles.TextInput}
-          placeholder="Нууц үг"
+          placeholder="Password"
           placeholderTextColor="#003f5c"
           secureTextEntry={true}
           onChangeText={(text) => setPassword(text)}
           value={password}
         />
       </View>
-      <TouchableOpacity style={styles.loginBtn} onPress={RegisterUser}>
-        <Text style={styles.loginText}>Бүртгүүлэх</Text>
+      <TouchableOpacity style={styles.loginBtn} onPress={handleRegister}>
+        <Text style={styles.loginText}>Register</Text>
       </TouchableOpacity>
     </View>
   );
