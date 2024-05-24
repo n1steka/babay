@@ -23,7 +23,7 @@ const DrawerNav = () => (
   <Drawer.Navigator>
     <Drawer.Screen name="Нүүр хуудас" component={Read} />
     <Drawer.Screen name="Миний булан" component={Mypro} />
-    <Drawer.Screen name="Эмч мэдээлэл харах" component={Doctor} />
+    <Drawer.Screen name="Эмч мэдээлэл харах" component={DoctorRead} />
     <Drawer.Screen name="Гарах" component={LogoutScreen} />
   </Drawer.Navigator>
 );

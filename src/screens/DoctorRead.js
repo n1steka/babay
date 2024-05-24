@@ -8,19 +8,32 @@ import {
   Button,
   Image,
 } from "react-native";
-import { IMGURL } from "../../utils/axios"; // Ensure the path is correct
-import { usePostContext } from "../../context/postContext"; // Ensure the path is correct
-import EditDoctorModal from "../components/EditDoctorModal"; // Ensure the path is correct
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
+import { IMGURL } from "../../utils/axios";
+import { usePostContext } from "../../context/postContext";
+import EditDoctorModal from "../components/EditDoctorModal";
 
 const DoctorsReadScreen = () => {
   const { fetchDoctors, doctor } = usePostContext();
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [role, setRole] = useState("");
+
+  const userRoleFetch = async () => {
+    const user = await AsyncStorage.getItem("user");
+    const parsedUser = JSON.parse(user);
+    const role = parsedUser.role;
+    setRole(role);
+  };
+
+  useEffect(() => {
+    userRoleFetch();
+  }, []); // Fetch role only once when the component mounts
 
   useEffect(() => {
     fetchDoctors();
-  }, []);
+  }, [fetchDoctors]); // Fetch doctors whenever fetchDoctors function changes
 
   const handleEditDoctor = (doctor) => {
     setSelectedDoctor(doctor);
@@ -41,10 +54,12 @@ const DoctorsReadScreen = () => {
         <Text style={styles.hospital}>Hospital: {item.hospital}</Text>
         <Text style={styles.phoneNumber}>Phone Number: {item.phoneNumber}</Text>
         <Text style={styles.address}>Address: {item.address}</Text>
-        <Button
-          title="Мэдээлэл өөрчлөх"
-          onPress={() => handleEditDoctor(item)}
-        />
+        {role === "admin" && (
+          <Button
+            title="Edit Information"
+            onPress={() => handleEditDoctor(item)}
+          />
+        )}
       </View>
     );
   };
@@ -67,13 +82,11 @@ const DoctorsReadScreen = () => {
         keyExtractor={(item) => item._id.toString()}
         contentContainerStyle={styles.listContent}
       />
-      {selectedDoctor && (
-        <EditDoctorModal
-          visible={isEditModalVisible}
-          onClose={() => setEditModalVisible(false)}
-          doctor={selectedDoctor}
-        />
-      )}
+      <EditDoctorModal
+        visible={isEditModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        doctor={selectedDoctor}
+      />
     </View>
   );
 };
