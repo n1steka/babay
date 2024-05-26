@@ -63,10 +63,10 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
     if (image) {
       const uriParts = image.uri.split(".");
       const fileType = uriParts[uriParts.length - 1];
-      formData.append("file", {
+      formData.append("photo", {
         uri: image.uri,
-        name: image.fileName,
-        type: image.mimeType,
+        name: `photo.${fileType}`,
+        type: `image/${fileType}`,
       });
     }
     formData.append("name", name);
@@ -94,6 +94,21 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
     } catch (error) {
       console.error("Failed to save doctor profile:", error);
       Alert.alert("Failed to save doctor profile. Please try again.");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const response = await axiosInstance.delete(`/doctors/${doctor._id}`);
+
+      if (response.data.success) {
+        Alert.alert("Doctor profile deleted successfully!");
+        onClose(); // Close the modal after deleting
+        fetchDoctors();
+      }
+    } catch (error) {
+      console.error("Failed to delete doctor profile:", error);
+      Alert.alert("Failed to delete doctor profile. Please try again.");
     }
   };
 
@@ -138,6 +153,12 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
         <TouchableOpacity style={styles.button} onPress={handleSave}>
           <Text style={styles.buttonText}>Save Doctor Profile</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, styles.deleteButton]}
+          onPress={handleDelete}
+        >
+          <Text style={styles.buttonText}>Delete Doctor Profile</Text>
+        </TouchableOpacity>
         <Button title="Close" onPress={onClose} />
       </ScrollView>
     </Modal>
@@ -169,6 +190,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 5,
+  },
+  deleteButton: {
+    backgroundColor: "red",
   },
   buttonText: {
     color: "white",
