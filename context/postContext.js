@@ -1,13 +1,13 @@
-// src/context/PostContext.js
-
 import React, { createContext, useState, useContext } from "react";
 import axiosInstance from "../utils/axios";
-import { Alert } from "react-native";
+
 const PostContext = createContext();
 
 export const PostProvider = ({ children }) => {
   const [posts, setPosts] = useState([]);
   const [doctor, setDoctors] = useState([]);
+  const [comments, setComments] = useState([]);
+
   const fetchPosts = async () => {
     try {
       const response = await axiosInstance.get("/post");
@@ -18,6 +18,18 @@ export const PostProvider = ({ children }) => {
       console.error("Error fetching posts:", error);
     }
   };
+
+  const fetchComments = async (postId) => {
+    try {
+      const response = await axiosInstance.get(`/post/${postId}/comments`);
+      if (response.data.success) {
+        setComments(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  };
+
   const fetchDoctors = async () => {
     try {
       const response = await axiosInstance.get("/doctors");
@@ -25,7 +37,7 @@ export const PostProvider = ({ children }) => {
         setDoctors(response.data.data);
       }
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("Error fetching doctors:", error);
     }
   };
 
@@ -36,8 +48,8 @@ export const PostProvider = ({ children }) => {
         comment: newComment,
         postId: postId,
       });
-      if (res) {
-        fetchPosts();
+      if (res.data.success) {
+        fetchComments(postId); // Refresh comments after adding a new one
       }
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -46,7 +58,15 @@ export const PostProvider = ({ children }) => {
 
   return (
     <PostContext.Provider
-      value={{ posts, fetchPosts, addComment, fetchDoctors, doctor }}
+      value={{
+        posts,
+        fetchPosts,
+        addComment,
+        fetchDoctors,
+        doctor,
+        comments,
+        fetchComments,
+      }}
     >
       {children}
     </PostContext.Provider>

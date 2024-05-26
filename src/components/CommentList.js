@@ -1,35 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, ActivityIndicator } from "react-native";
-import axiosInstance from "../../utils/axios";
 import tw from "twrnc";
 import { usePostContext } from "../../context/postContext";
 
 export default function CommentList({ postId }) {
-  const { fetchPosts } = usePostContext();
+  const { fetchComments, comments } = usePostContext();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [comments, setComments] = useState([]);
   const [showAllComments, setShowAllComments] = useState(false);
 
   useEffect(() => {
-    fetchComments();
-    fetchPosts();
-  }, []);
-
-  const fetchComments = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get(`/post/${postId}/comments`);
-      if (response.data.success) {
-        setComments(response.data.data);
+    const loadComments = async () => {
+      try {
+        setLoading(true);
+        await fetchComments(postId);
+      } catch (err) {
+        setError("Error fetching comments");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      setError("Error fetching comments");
-      console.error("Error fetching comments:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    loadComments();
+  }, [fetchComments, postId]);
 
   const handleSeeMore = () => {
     setShowAllComments(!showAllComments);

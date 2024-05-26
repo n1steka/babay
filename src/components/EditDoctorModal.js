@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -16,10 +16,6 @@ import { usePostContext } from "../../context/postContext";
 import axiosInstance from "../../utils/axios";
 
 const EditDoctorModal = ({ visible, onClose, doctor }) => {
-  if (!doctor) {
-    return null;
-  }
-
   const { fetchDoctors } = usePostContext();
   const [name, setName] = useState("");
   const [education, setEducation] = useState("");
@@ -27,6 +23,17 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
   const [image, setImage] = useState(null);
+
+  useEffect(() => {
+    if (doctor) {
+      setName(doctor.name || "");
+      setEducation(doctor.education || "");
+      setHospital(doctor.hospital || "");
+      setPhoneNumber(doctor.phoneNumber || "");
+      setAddress(doctor.address || "");
+      setImage(doctor.image ? { uri: doctor.image } : null);
+    }
+  }, [doctor]);
 
   const handleChooseImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -47,23 +54,23 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
   };
 
   const handleSave = async () => {
-    if (
-      !name ||
-      !education ||
-      !hospital ||
-      !phoneNumber ||
-      !address ||
-      !image
-    ) {
-      Alert.alert("Please fill in all fields.");
-      return;
-    }
+    // if (
+    //   !name ||
+    //   !education ||
+    //   !hospital ||
+    //   !phoneNumber ||
+    //   !address ||
+    //   !image
+    // ) {
+    //   Alert.alert("Please fill in all fields.");
+    //   return;
+    // }
 
     const formData = new FormData();
     formData.append("file", {
       uri: image.uri,
-      name: "image.jpg",
-      type: "image/jpeg",
+      name: image.fileName,
+      type: image.mimeType,
     });
     formData.append("name", name);
     formData.append("education", education);
@@ -83,20 +90,14 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
       );
 
       if (response.data.success) {
-        fetchDoctors();
-        setName("");
-        setEducation("");
-        setHospital("");
-        setPhoneNumber("");
-        setAddress("");
-        setImage(null);
         Alert.alert("Doctor profile saved successfully!");
+        onClose(); // Close the modal after saving
+        fetchDoctors();
       }
     } catch (error) {
       console.error("Failed to save doctor profile:", error);
       Alert.alert("Failed to save doctor profile. Please try again.");
     }
-    onClose();
   };
 
   return (
@@ -106,31 +107,31 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
         <TextInput
           style={styles.input}
           placeholder="Name"
-          value={name || doctor.name}
+          value={name}
           onChangeText={setName}
         />
         <TextInput
           style={styles.input}
           placeholder="Education"
-          value={education || doctor.education}
+          value={education}
           onChangeText={setEducation}
         />
         <TextInput
           style={styles.input}
           placeholder="Hospital"
-          value={hospital || doctor.hospital}
+          value={hospital}
           onChangeText={setHospital}
         />
         <TextInput
           style={styles.input}
           placeholder="Phone Number"
-          value={phoneNumber || doctor.phoneNumber}
+          value={phoneNumber}
           onChangeText={setPhoneNumber}
         />
         <TextInput
           style={styles.input}
           placeholder="Address"
-          value={address || doctor.address}
+          value={address}
           onChangeText={setAddress}
         />
         <TouchableOpacity style={styles.button} onPress={handleChooseImage}>
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    marginTop: 200,
+    marginTop: 20,
   },
   input: {
     height: 40,
