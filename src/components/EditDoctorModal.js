@@ -63,10 +63,10 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
     if (image) {
       const uriParts = image.uri.split(".");
       const fileType = uriParts[uriParts.length - 1];
-      formData.append("photo", {
+      formData.append("file", {
         uri: image.uri,
-        name: `photo.${fileType}`,
-        type: `image/${fileType}`,
+        name: image.fileName,
+        type: image.mimeType,
       });
     }
     formData.append("name", name);
@@ -97,13 +97,12 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
     }
   };
 
-  const handleDelete = async () => {
+  const deleteFunction = async () => {
     try {
       const response = await axiosInstance.delete(`/doctors/${doctor._id}`);
-
       if (response.data.success) {
         Alert.alert("Doctor profile deleted successfully!");
-        onClose(); // Close the modal after deleting
+        onClose();
         fetchDoctors();
       }
     } catch (error) {
@@ -111,7 +110,6 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
       Alert.alert("Failed to delete doctor profile. Please try again.");
     }
   };
-
   return (
     <Modal visible={visible} animationType="slide">
       <ScrollView style={styles.container}>
@@ -155,9 +153,9 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.button, styles.deleteButton]}
-          onPress={handleDelete}
+          onPress={deleteFunction}
         >
-          <Text style={styles.buttonText}>Delete Doctor Profile</Text>
+          <Text style={styles.buttonText}>Delete</Text>
         </TouchableOpacity>
         <Button title="Close" onPress={onClose} />
       </ScrollView>
@@ -191,9 +189,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 5,
   },
-  deleteButton: {
-    backgroundColor: "red",
-  },
   buttonText: {
     color: "white",
   },
@@ -202,6 +197,9 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 5,
     marginTop: 10,
+  },
+  deleteButton: {
+    backgroundColor: "red",
   },
 });
 
