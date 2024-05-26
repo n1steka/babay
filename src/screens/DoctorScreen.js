@@ -1,131 +1,90 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  View,
   Text,
-  TextInput,
-  TouchableOpacity,
+  FlatList,
   StyleSheet,
+  TextInput,
+  Button,
   Image,
-  ScrollView,
-  Alert,
 } from "react-native";
-import axiosInstance from "../../utils/axios";
-import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
+import { IMGURL } from "../../utils/axios";
 import { usePostContext } from "../../context/postContext";
-const DoctorProfile = () => {
-  const { fetchDoctors } = usePostContext();
-  const [name, setName] = useState("");
-  const [education, setEducation] = useState("");
-  const [hospital, setHospital] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [address, setAddress] = useState("");
-  const [image, setImage] = useState(null);
+import EditDoctorModal from "../components/EditDoctorModal";
 
-  const handleChooseImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("Sorry, we need camera roll permissions to make this work!");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+const DoctorsReadScreen = () => {
+  const { fetchDoctors, doctor } = usePostContext();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [role, setRole] = useState("");
 
-    if (!result.cancelled) {
-      setImage(result.assets[0]);
-    }
+  const userRoleFetch = async () => {
+    const user = await AsyncStorage.getItem("user");
+    const parsedUser = JSON.parse(user);
+    const role = parsedUser.role;
+    setRole(role);
   };
 
-  const saveDoctorProfile = async () => {
-    if (
-      !name ||
-      !education ||
-      !hospital ||
-      !phoneNumber ||
-      !address ||
-      !image
-    ) {
-      Alert.alert("Бүх талбарыг бөглөнө үү ");
-      return;
-    }
+  useEffect(() => {
+    userRoleFetch();
+    fetchDoctors();
+  }, []); // Fetch role only once when the component mounts
 
-    const formData = new FormData();
-    formData.append("file", {
-      uri: image.uri,
-      name: image.fileName,
-      type: image.mimeType,
-    });
-    formData.append("name", name);
-    formData.append("education", education);
-    formData.append("hospital", hospital);
-    formData.append("phoneNumber", phoneNumber);
-    formData.append("address", address);
-
-    try {
-      const response = await axiosInstance.post("/doctors", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      if (response.data.success) {
-        fetchDoctors();
-        setName("");
-        setEducation("");
-        setHospital("");
-        setPhoneNumber("");
-        setAddress("");
-        setImage(null);
-        Alert.alert("Doctor profile saved successfully!");
-      }
-    } catch (error) {
-      console.error("Failed to save doctor profile:", error);
-      Alert.alert("Failed to save doctor profile. Please try again.");
-    }
+  const handleEditDoctor = (doctor) => {
+    setSelectedDoctor(doctor);
+    setEditModalVisible(true);
   };
+
+  const renderDoctorItem = ({ item }) => {
+    return (
+      <View style={styles.doctorItem}>
+        <Image
+          source={{
+            uri: `${IMGURL}/${item.photo}`,
+          }}
+          style={styles.image}
+        />
+        <Text style={styles.name}>Name: {item.name}</Text>
+        <Text style={styles.education}>Education: {item.education}</Text>
+        <Text style={styles.hospital}>Hospital: {item.hospital}</Text>
+        <Text style={styles.phoneNumber}>Phone Number: {item.phoneNumber}</Text>
+        <Text style={styles.address}>Address: {item.address}</Text>
+        {role === "admin" && (
+          <Button
+            title="Edit Information"
+            onPress={() => handleEditDoctor(item)}
+          />
+        )}
+      </View>
+    );
+  };
+
+  const filteredDoctors = doctor.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
+        style={styles.searchInput}
+        placeholder="Search"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Education"
-        value={education}
-        onChangeText={setEducation}
+      <FlatList
+        data={filteredDoctors}
+        renderItem={renderDoctorItem}
+        keyExtractor={(item) => item._id.toString()} // Ensure each item has a unique key
+        contentContainerStyle={styles.listContent}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Hospital"
-        value={hospital}
-        onChangeText={setHospital}
+      <EditDoctorModal
+        visible={isEditModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        doctor={selectedDoctor}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Address"
-        value={address}
-        onChangeText={setAddress}
-      />
-      <TouchableOpacity style={styles.button} onPress={handleChooseImage}>
-        <Text style={styles.buttonText}>Choose Image</Text>
-      </TouchableOpacity>
-      {image && <Image source={{ uri: image.uri }} style={styles.image} />}
-      <TouchableOpacity style={styles.button} onPress={saveDoctorProfile}>
-        <Text style={styles.buttonText}>Save Doctor Profile</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -133,31 +92,53 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#fff",
   },
-  input: {
-    height: 40,
-    borderColor: "gray",
+  searchInput: {
     borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  button: {
-    backgroundColor: "blue",
-    padding: 10,
-    marginTop: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: "#ccc",
     borderRadius: 5,
+    padding: 10,
+    marginBottom: 20,
   },
-  buttonText: {
-    color: "white",
+  listContent: {
+    paddingBottom: 20,
+  },
+  doctorItem: {
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    backgroundColor: "#f9f9f9",
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  education: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  hospital: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  phoneNumber: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  address: {
+    fontSize: 16,
+    marginBottom: 5,
   },
   image: {
     width: "100%",
-    height: 200,
+    height: 280,
     borderRadius: 5,
-    marginTop: 10,
+    marginBottom: 10,
   },
 });
 
-export default DoctorProfile;
+export default DoctorsReadScreen;

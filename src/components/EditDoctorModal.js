@@ -38,7 +38,7 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
   const handleChooseImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Sorry, we need camera roll permissions to make this work!");
+      alert("Sorry, we need camera roll permissions to make this work!");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -49,29 +49,26 @@ const EditDoctorModal = ({ visible, onClose, doctor }) => {
     });
 
     if (!result.cancelled) {
-      setImage(result);
+      setImage(result.assets[0]);
     }
   };
 
   const handleSave = async () => {
-    // if (
-    //   !name ||
-    //   !education ||
-    //   !hospital ||
-    //   !phoneNumber ||
-    //   !address ||
-    //   !image
-    // ) {
-    //   Alert.alert("Please fill in all fields.");
-    //   return;
-    // }
+    if (!name || !education || !hospital || !phoneNumber || !address) {
+      Alert.alert("Please fill in all fields.");
+      return;
+    }
 
     const formData = new FormData();
-    formData.append("file", {
-      uri: image.uri,
-      name: image.fileName,
-      type: image.mimeType,
-    });
+    if (image) {
+      const uriParts = image.uri.split(".");
+      const fileType = uriParts[uriParts.length - 1];
+      formData.append("file", {
+        uri: image.uri,
+        name: image.fileName,
+        type: image.mimeType,
+      });
+    }
     formData.append("name", name);
     formData.append("education", education);
     formData.append("hospital", hospital);

@@ -7,13 +7,11 @@ import NewsScreen from "./src/screens/News";
 import LoginScreen from "./src/screens/Login";
 import RegisterScreen from "./src/screens/Register";
 import LogoutScreen from "./src/screens/Logout";
-import Profile from "./src/screens/doctorprofile";
 import DoctorRead from "./src/screens/DoctorRead";
 import Mypro from "./src/screens/myprofile";
 import Doctor from "./src/screens/DoctorScreen";
 import Post from "./src/screens/Post";
 import Read from "./src/screens/read";
-import DRegister from "./src/screens/Dregister";
 import { PostProvider } from "./context/postContext";
 
 const Stack = createNativeStackNavigator();

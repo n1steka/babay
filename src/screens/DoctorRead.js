@@ -20,6 +20,7 @@ const DoctorsReadScreen = () => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [role, setRole] = useState("");
 
+  console.log(doctor);
   const userRoleFetch = async () => {
     const user = await AsyncStorage.getItem("user");
     const parsedUser = JSON.parse(user);
